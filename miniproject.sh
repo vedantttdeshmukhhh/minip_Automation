@@ -1,14 +1,14 @@
 #!/bin/bash
 
-# --- AESTHETIC COLOR PALETTE (256-bit) ---
-GREEN='\033[38;5;150m'   # Sage/Soft Green
-CYAN='\033[38;5;153m'    # Light Sky Blue
-PEACH='\033[38;5;216m'   # Soft Peach/Orange
-LAVENDER='\033[38;5;183m' # Light Lavender
-GRAY='\033[38;5;246m'    # Muted Gray
-NC='\033[0m'             # Reset
 
-# Task 1: Safety Guard & Name Capture
+GREEN='\033[38;5;150m'
+CYAN='\033[38;5;153m'
+PEACH='\033[38;5;216m'
+LAVENDER='\033[38;5;183m'
+GRAY='\033[38;5;246m'
+NC='\033[0m'
+
+
 INPUT_NAME=$1
 if [ -z "$INPUT_NAME" ]; then
     echo -e "${PEACH}Error: Oops!, you forgot to enter the project name.${NC}"
@@ -16,7 +16,7 @@ if [ -z "$INPUT_NAME" ]; then
     exit 1
 fi
 
-# --- SMART STEP 3: The Universal Check ---
+
 if [ "$INPUT_NAME" == "." ]; then
     PROJECT_NAME=$(basename "$PWD") 
     echo -e "${LAVENDER}Step 3: Automating current folder: '$PROJECT_NAME'...${NC}"
@@ -32,11 +32,11 @@ else
     fi
 fi
 
-# Step 4: Initializing Git
+
 echo -e "${GRAY}Step 4: Initializing Git Tracking...${NC}"
 git init
 
-# Step 5: Writing README.md
+
 if [ ! -f "README.md" ]; then
     echo -e "${CYAN}Step 5: Writing README.md...${NC}"
     echo "# $PROJECT_NAME" > README.md
@@ -46,13 +46,13 @@ else
     echo -e "${GRAY}Step 5: README.md already exists. Skipping...${NC}"
 fi
 
-# Step 6: Security Shield
+
 echo -e "${GRAY}Step 6: Setting up security shield (.gitignore)...${NC}"
 echo ".env" >> .gitignore
 echo "*.log" >> .gitignore
 echo "node_modules/" >> .gitignore
 
-# Extra Files Prompt
+
 echo -e "${LAVENDER}Any extra files to hide? (Enter names or press Enter to skip):${NC}"
 read EXTRA_FILES
 if [ ! -z "$EXTRA_FILES" ]; then
@@ -60,7 +60,7 @@ if [ ! -z "$EXTRA_FILES" ]; then
     echo -e "${GRAY}Added $EXTRA_FILES to the shield.${NC}"
 fi
 
-# Step 7: The Global Launch
+
 echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 
 echo -e "${PEACH}Visibility: (1) Public or (2) Private? (Enter 1 or 2):${NC}"
@@ -81,7 +81,7 @@ echo -e "${CYAN}Step 7: Creating Github repository and pushing...${NC}"
 git add .
 git commit -m "$CUSTOM_MSG"
 
-# --- SMART UPLOAD CHECK ---
+
 if gh repo create "$PROJECT_NAME" $VISIBILITY --source=. --remote=origin --push; then
     echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo -e "SUCCESS! Your project '$PROJECT_NAME' is ready and live."
