@@ -8,6 +8,10 @@ This tool helps you upload any folder to GitHub with just one command.
 Run this command in your Git Bash:
 `curl -sSL https://raw.githubusercontent.com/vedantttdeshmukhhh/minip_Automation/master/install.sh | bash`
 
+### Redresh
+Run this command in your Git Bash:
+`source ~/.bash_profile`
+
 ### How to Use
 Type `automate .` in any folder to upload it to GitHub.
 if you want to upload the current exisiting folder then type this command.
