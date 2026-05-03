@@ -1,94 +1,95 @@
 #!/bin/bash
 
-# --- AESTHETIC COLOR PALETTE (256-bit) ---
-GREEN='\033[38;5;150m'   # Sage/Soft Green
-CYAN='\033[38;5;153m'    # Light Sky Blue
-PEACH='\033[38;5;216m'   # Soft Peach/Orange
-LAVENDER='\033[38;5;183m' # Light Lavender
-GRAY='\033[38;5;246m'    # Muted Gray
-NC='\033[0m'             # Reset
+GREEN='\033[38;5;150m'
+CYAN='\033[38;5;153m'
+PEACH='\033[38;5;216m'
+LAVENDER='\033[38;5;183m'
+GRAY='\033[38;5;246m'
+NC='\033[0m'
 
-# Task 1: Safety Guard & Name Capture
+CONFIG_FILE="$HOME/.automate_config"
+
+if [ ! -f "$CONFIG_FILE" ]; then
+    echo -e "${PEACH}First-time Setup: Please enter your GitHub details.${NC}"
+    echo -e "${GRAY}Get your token here: https://github.com/settings/tokens (Enable 'repo' permissions)${NC}"
+    read -p "GitHub Username: " GH_USER
+    read -sp "Personal Access Token: " GH_TOKEN
+    echo ""
+    echo "GH_USER=$GH_USER" > "$CONFIG_FILE"
+    echo "GH_TOKEN=$GH_TOKEN" >> "$CONFIG_FILE"
+else
+    source "$CONFIG_FILE"
+fi
+
 INPUT_NAME=$1
 if [ -z "$INPUT_NAME" ]; then
-    echo -e "${PEACH}Error: Oops!, you forgot to enter the project name.${NC}"
-    echo -e "${GRAY}Usage: automate [NAME] or automate . (for current folder)${NC}"
+    echo -e "${PEACH}Error: Project name missing.${NC}"
     exit 1
 fi
 
-# --- SMART STEP 3: The Universal Check ---
 if [ "$INPUT_NAME" == "." ]; then
-    PROJECT_NAME=$(basename "$PWD") 
-    echo -e "${LAVENDER}Step 3: Automating current folder: '$PROJECT_NAME'...${NC}"
+    PROJECT_NAME=$(basename "$PWD")
 else
     PROJECT_NAME=$INPUT_NAME
-    if [ -d "$PROJECT_NAME" ]; then
-        echo -e "${LAVENDER}Step 3: Existing folder '$PROJECT_NAME' detected. Moving inside...${NC}"
-        cd "$PROJECT_NAME"
-    else
-        echo -e "${CYAN}Step 3: Building your new workspace '$PROJECT_NAME'...${NC}"
-        mkdir "$PROJECT_NAME"
-        cd "$PROJECT_NAME"
-    fi
+    mkdir -p "$PROJECT_NAME" && cd "$PROJECT_NAME"
 fi
 
-# Step 4: Initializing Git
-echo -e "${GRAY}Step 4: Initializing Git Tracking...${NC}"
 git init
 
-# Step 5: Writing README.md
 if [ ! -f "README.md" ]; then
-    echo -e "${CYAN}Step 5: Writing README.md...${NC}"
     echo "# $PROJECT_NAME" > README.md
     echo "Automated by: Vedant Deshmukh" >> README.md
-    echo "Created on: $(date)" >> README.md
-else
-    echo -e "${GRAY}Step 5: README.md already exists. Skipping...${NC}"
 fi
 
-# Step 6: Security Shield
-echo -e "${GRAY}Step 6: Setting up security shield (.gitignore)...${NC}"
 echo ".env" >> .gitignore
 echo "*.log" >> .gitignore
 echo "node_modules/" >> .gitignore
 
-# Extra Files Prompt
-echo -e "${LAVENDER}Any extra files to hide? (Enter names or press Enter to skip):${NC}"
+echo -e "${LAVENDER}Any extra files to hide? (Enter names or Enter to skip):${NC}"
 read EXTRA_FILES
-if [ ! -z "$EXTRA_FILES" ]; then
-    echo "$EXTRA_FILES" >> .gitignore
-    echo -e "${GRAY}Added $EXTRA_FILES to the shield.${NC}"
-fi
+[ ! -z "$EXTRA_FILES" ] && echo "$EXTRA_FILES" >> .gitignore
 
-# Step 7: The Global Launch
 echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-
 echo -e "${PEACH}Visibility: (1) Public or (2) Private? (Enter 1 or 2):${NC}"
 read PRIVACY_CHOICE
-if [ "$PRIVACY_CHOICE" == "2" ]; then
-    VISIBILITY="--private"
-else
-    VISIBILITY="--public"
-fi
+[ "$PRIVACY_CHOICE" == "2" ] && IS_PRIVATE="true" || IS_PRIVATE="false"
 
-echo -e "${LAVENDER}Enter commit message (or press Enter for default):${NC}"
+echo -e "${LAVENDER}Enter commit message:${NC}"
 read CUSTOM_MSG
-if [ -z "$CUSTOM_MSG" ]; then
-    CUSTOM_MSG="Initial automated commit"
-fi
+[ -z "$CUSTOM_MSG" ] && CUSTOM_MSG="Initial automated commit"
 
-echo -e "${CYAN}Step 7: Creating Github repository and pushing...${NC}"
-git add .
-git commit -m "$CUSTOM_MSG"
+echo -e "${CYAN}Step 7: Creating GitHub repository...${NC}"
 
-# --- SMART UPLOAD CHECK ---
-if gh repo create "$PROJECT_NAME" $VISIBILITY --source=. --remote=origin --push; then
+echo "{\"name\":\"$PROJECT_NAME\", \"private\": $IS_PRIVATE}" > repo_data.json
+RESPONSE=$(curl -s -u "$GH_USER:$GH_TOKEN" https://api.github.com/user/repos -d @repo_data.json)
+rm repo_data.json
+
+# Improved check: If the response contains a "html_url", it definitely worked!
+if [[ $RESPONSE == *"html_url"* ]]; then
+    git add .
+    git commit -m "$CUSTOM_MSG"
+    git branch -M main
+    git remote add origin "https://github.com/$GH_USER/$PROJECT_NAME.git"
+    git push -u origin main
+    
     echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo -e "SUCCESS! Your project '$PROJECT_NAME' is ready and live."
+    echo -e "SUCCESS! Your project '$PROJECT_NAME' is live."
     echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    ls -a
 else
-    echo -e "${PEACH}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo -e "Wait! GitHub upload failed. (Check if the name already exists)."
-    echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    # If it failed because it already exists, we can still push to it!
+    if [[ $RESPONSE == *"already exists"* ]]; then
+        echo -e "${CYAN}Repo already exists on GitHub. Syncing files...${NC}"
+        git add .
+        git commit -m "$CUSTOM_MSG"
+        git branch -M main
+        git remote add origin "https://github.com/$GH_USER/$PROJECT_NAME.git" 2>/dev/null
+        git push -u origin main
+        echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo -e "SUCCESS! Existing project '$PROJECT_NAME' updated."
+        echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    else
+        echo -e "${PEACH}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo -e "GitHub Error: $(echo "$RESPONSE" | grep -oP '"message":\s*"\K[^"]+')"
+        echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    fi
 fi
